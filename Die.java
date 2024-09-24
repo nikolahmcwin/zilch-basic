@@ -55,7 +55,7 @@ public class Die {
    }
 
    // Move from points bay back into active
-   public void unselectDice() {
+   public void putIntoActiveThrow() {
       selected = false;
       banked = false;
    }

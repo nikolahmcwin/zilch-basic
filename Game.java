@@ -36,11 +36,6 @@ public class Game {
       winner = "";
    }
 
-   // Reset everything in the game.
-   public void resetGame() {
-
-   }
-
    // Start the very first turn of play in the game
    public void playGame() {
 
@@ -54,10 +49,10 @@ public class Game {
 
          // Start the dice roll
          dice.startPlayerThrow();
-         printDice();
+         printDiceRoll();
 
          // Play through until player cannot
-         String input;
+         boolean autoEnded = true;
          while (dice.canContinue()) {
 
             System.out.println("Enter the letters for the dice to keep.");
@@ -65,15 +60,16 @@ public class Game {
 
                printDicePoints();
 
-               if ((!players[activePlayer].isInGame() && dice.getScore() > MIN_START_SCORE)
-                     || (players[activePlayer].isInGame() && dice.getScore() > MIN_BASE_SCORE)) {
+               if ((!players[activePlayer].isInGame() && dice.getScore() >= MIN_START_SCORE)
+                     || (players[activePlayer].isInGame() && dice.getScore() >= MIN_BASE_SCORE)) {
                   System.out.println("Press (X) to finish or any other key to roll again.");
                   if (readActionInput(sc)) {
+                     autoEnded = false;
                      break;
                   }
                }
                dice.continueThrow();
-               printDice();
+               printDiceRoll();
 
             } else {
                System.out.println("Not a valid input. Please try again.");
@@ -82,7 +78,17 @@ public class Game {
 
          // Finish current turn
          players[activePlayer].updateScore(dice.getScore());
+
+         if (autoEnded) {
+            System.out.println("\n\t YOU GOT ZILCH! \n");
+
+         } else {
+            System.out.println("\n\t CHANGING PLAYERS... \n");
+            //printActivePlayer();
+         }
+
          winner = getWinner();
+         
       }
    }
 
@@ -110,15 +116,15 @@ public class Game {
    }
 
    // Swap players to the next
-   public void nextPlayer() {
+   private void nextPlayer() {
       activePlayer++;
-      if (activePlayer > numPlayers) {
+      if (activePlayer >= numPlayers) {
          activePlayer = 0;
       }
    }
 
    // Return name of player who is winner, if any
-   public String getWinner() {
+   private String getWinner() {
       if (players[activePlayer].isWinner()) {
          return players[activePlayer].getName();
       } else {
@@ -127,23 +133,30 @@ public class Game {
    }
 
    // Quick print the dice points only
-   public void printDicePoints() {
-      System.out.println("POINTS:\t" + dice.getPointsDice() + " totalling " + dice.getScore());
+   private void printDicePoints() {
+      System.out.println("--------------------------------");
+      System.out.println(">>> " + players[activePlayer].getName() + ": " + dice.getScore() + " points.");
+      System.out.println(dice.getBankedDice());
+   }
+
+   // Quick print the dice roll
+   public void printDiceRoll() {
+      System.out.println("--------------------------------");
+      System.out.println(">>> " + players[activePlayer].getName() + ": Roll # " + dice.getRollNumber() + ".");
+      System.out.println(dice.getActiveDice());
+      System.out.println(dice.getDiceNames());
+      System.out.println("--------------------------------");
    }
 
    // Quick print the dice throw
    public void printDice() {
-      System.out.println("---------------------------------");
-      System.out.println("DICE: \t" + dice.getDiceNames());
-      System.out.println("THROW: \t" + dice.getActiveDice());
-      System.out.println("---------------------------------");
+      System.out.println(dice.toString());
    }
 
    // Print current active player
    public void printActivePlayer() {
-      System.out.println("* You're up, " + players[activePlayer].getName() +
-            "!\n\tYou have " + players[activePlayer].getScore() + " points and " +
-            players[activePlayer].getZilchCount() + " zilches! ****");
+      System.out.println("--------------------------------");
+      System.out.println(players[activePlayer].toString());
    }
 
    // Print full details all players

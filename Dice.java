@@ -9,6 +9,7 @@ public class Dice {
    private int tmpScore;
    private int selectedDice;
    private int bankedDice;
+   private int numRolls;
 
    private int trioNumber;
    private int numTrios;
@@ -27,6 +28,7 @@ public class Dice {
 
       score = 0;
       tmpScore = 0;
+      numRolls = 0;
       selectedDice = 0;
       trioNumber = 0;
       numPairs = 0;
@@ -41,6 +43,7 @@ public class Dice {
    // Start a new dice throw
    public void startPlayerThrow() {
       newThrow();
+      refillThrow();
       rollActiveDice();
    }
 
@@ -56,7 +59,7 @@ public class Dice {
 
    // Keep the throws going
    public void continueThrow() {
-      if (bankedDice >= NUM_DICE - 1) {
+      if (bankedDice >= NUM_DICE) {
          refillThrow();
       }
       rollActiveDice();
@@ -65,20 +68,12 @@ public class Dice {
    // WHen all dice are banked, but can continue, reset them into active
    private void refillThrow() {
       for (Die die : dice) {
-         if (die.isBanked()) {
-            die.unselectDice();
+         if (die.isBanked() || die.isSelected()) {
+            die.putIntoActiveThrow();
          }
       }
       trioNumber = 0;
       bankedDice = 0;
-   }
-
-   // Start all dice active and roll
-   public void rollAllDice() {
-      for (Die die : dice) {
-         die.unselectDice();
-         die.roll();
-      }
    }
 
    // Roll the active dice
@@ -88,6 +83,7 @@ public class Dice {
             die.roll();
          }
       }
+      numRolls++;
    }
 
    // Scan dice throw for auto zilch
@@ -134,11 +130,21 @@ public class Dice {
    private void unselectDice() {
       for (Die die : dice) {
          if (die.isSelected()) {
-            die.unselectDice();
+            die.putIntoActiveThrow();
          }
       }
       nextThrow();
    }
+
+      // Restore all dice to the full throw
+      private void putIntoActiveThrow() {
+         for (Die die : dice) {
+            if (die.isSelected()) {
+               die.putIntoActiveThrow();
+            }
+         }
+         nextThrow();
+      }
 
    // Take the letter name of a dice, get the array index
    private boolean readDiceInput(String[] diceToKeep) {
@@ -190,7 +196,6 @@ public class Dice {
       }
 
       //TODO four dice , five dice, two, dice etc
-
       return tmpScore != 0;
    }
 
@@ -211,6 +216,7 @@ public class Dice {
    private int countOccurences(String string, int numToCount) {
       String match = Integer.toString(numToCount);
       int count = string.length() - string.replace(match, "").length();
+
       if (count >= 3) {
          numTrios++;
          trioNumber = numToCount;
@@ -250,11 +256,17 @@ public class Dice {
       return score;
    }
 
+   // Return the number of rolls this dice set is on.
+   public int getRollNumber() {
+      return numRolls;
+   }
+
    // Clear all stored parameters on the dice throw.
    private void newThrow() {
       score = 0;
       trioNumber = 0;
       bankedDice = 0;
+      numRolls = 0;
       nextThrow();
    }
 
@@ -290,8 +302,9 @@ public class Dice {
    public String getDiceNames() {
       if (allDiceNames == null) {
          StringBuilder sb = new StringBuilder();
+         sb.append("\t");
          for (String name : diceNames) {
-            sb.append("-" + name + "- ");
+            sb.append("[" + name + "] ");
          }
          allDiceNames = sb.toString();
       }
@@ -300,25 +313,26 @@ public class Dice {
 
    // Get a string of the current active dice
    public String getActiveDice() {
-      return getDice(true, false);
+      return getDice(true, false, false);
+   }
+
+   // Get a string of the current banked dice
+   public String getBankedDice() {
+      return getDice(false, true, false);
    }
 
    // Get a string of the current selected dice
    public String getSelectedDice() {
-      return getDice(false, true);
-   }
-
-   // Get a string of the current banked dice
-   public String getPointsDice() {
-      return getDice(false, false);
+      return getDice(false, false, true);
    }
 
    // Return a string of the dice
-   private String getDice(boolean getActive, boolean getSelected) {
+   private String getDice(boolean getActive, boolean getBanked, boolean getSelected) {
 
       StringBuilder sb = new StringBuilder();
+      sb.append("\t");
       for (Die die : dice) {
-         if ((getActive && die.isActive()) || (!getActive && die.isBanked()) || (getSelected && die.isSelected())) {
+         if ((getActive && die.isActive()) || (getBanked && die.isBanked()) || (getSelected && die.isSelected())) {
             sb.append("[" + die.getNumber() + "] ");
          } else {
             sb.append("[ ] ");
@@ -327,12 +341,7 @@ public class Dice {
       return sb.toString();
    }
 
-   // Detailed print of all dice details
-   public void printDiceDetails() {
-      System.out.println("\n\n  **** Dice Details **** ");
-      for (Die die : dice) {
-         System.out.println(die.toString());
-      }
+   public String toString() {
+      return "\n" + getBankedDice() + "\n" + getActiveDice() + "\n" + getDiceNames();
    }
-
 }

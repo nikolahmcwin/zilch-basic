@@ -15,7 +15,8 @@ public class Player {
    private int playerID;
    private String name;
    private boolean inGame;
-   private int score;
+   private int gameScore;
+   private int mostRecentScore;
    private int numZilches;
 
    // Default constructor, auto generated name
@@ -27,7 +28,8 @@ public class Player {
    public Player(String playerName, int playerNumber) {
       name = playerName;
       playerID = playerNumber;
-      score = 0;
+      gameScore = 0;
+      mostRecentScore = 0;
       numZilches = 0;
    }
 
@@ -38,7 +40,12 @@ public class Player {
 
    // Return player score
    public int getScore() {
-      return score;
+      return gameScore;
+   }
+
+   // Return most recent score
+   public int getLastScore() {
+      return mostRecentScore;
    }
 
    // Return player ID
@@ -55,25 +62,30 @@ public class Player {
    public boolean isInGame() {
       return inGame;
    }
-   
+
    // Return if score is enough to win
    public boolean isWinner() {
-      return score >= WINNING_GAME_SCORE;
+      return gameScore >= WINNING_GAME_SCORE;
    }
 
    // Return summary string of player
    public String toString() {
-      return "PLAYER: [" + name +
-            "] SCORE: [" + Integer.toString(score) +
-            "] #ZILCH: [" + Integer.toString(numZilches) +
-            "] IN: [" + Boolean.toString(inGame) + "]";
+      return getNameString() + "\n" + getScoreString() + "\n" + getRecentScoreString();
    }
 
-   // Quick print the active player
-   public void printPlayer(int i) {
-      System.out.println("PLAYER: \t" + name);
-      System.out.println("SCORE:  \t" + score);
-      System.out.println("#ZILCH: \t" + numZilches);
+   // Return summary string of player
+   public String getNameString() {
+      return ">>> " + name + ":";
+   }
+
+   // Return summary string of player
+   public String getScoreString() {
+      return "\t [" + gameScore + " points] [" + numZilches + " zilches]";
+   }
+
+   // Return summary string of player
+   public String getRecentScoreString() {
+      return "\t [" + mostRecentScore + " last score]";
    }
 
    // Update player score, marking zilches as required
@@ -82,6 +94,7 @@ public class Player {
       // Don't record scores if not yet in the game
       if (!inGame) {
          if (newPoints < MIN_START_SCORE) {
+            mostRecentScore = 0;
             return 0;
          } else {
             inGame = true;
@@ -94,15 +107,16 @@ public class Player {
       }
 
       // Increment score by new points
-      score += newPoints;
-      return score;
+      mostRecentScore = newPoints;
+      gameScore += newPoints;
+      return gameScore;
    }
 
    // Handle logic for getting zero points (zilch score)
    private void increaseZilchCount() {
       numZilches++;
       if (numZilches >= MAX_NUM_ZILCHES) {
-         score -= SCORE_PENALTY;
+         gameScore -= SCORE_PENALTY;
          numZilches = 0;
       }
    }
