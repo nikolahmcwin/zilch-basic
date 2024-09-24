@@ -18,6 +18,7 @@ public class Player {
    private int gameScore;
    private int mostRecentScore;
    private int numZilches;
+   private int totalPlays;
 
    // Default constructor, auto generated name
    public Player() {
@@ -26,11 +27,12 @@ public class Player {
 
    // Standard constructor, name passed in
    public Player(String playerName, int playerNumber) {
-      name = playerName;
+      name = playerName.toUpperCase();
       playerID = playerNumber;
       gameScore = 0;
       mostRecentScore = 0;
       numZilches = 0;
+      totalPlays = 0;
    }
 
    // Return player name
@@ -58,6 +60,11 @@ public class Player {
       return numZilches;
    }
 
+      // Return count of Zilches
+      public int getPlayCount() {
+         return totalPlays;
+      }
+   
    // Return if the player is in the game score yet
    public boolean isInGame() {
       return inGame;
@@ -70,26 +77,28 @@ public class Player {
 
    // Return summary string of player
    public String toString() {
-      return getNameString() + "\n" + getScoreString() + "\n" + getRecentScoreString();
+      return "" + getNameString() + "" + getScoreString() + "" + getRecentScoreString();
    }
 
    // Return summary string of player
    public String getNameString() {
-      return ">>> " + name + ":";
+      return "" + name + "";
    }
 
    // Return summary string of player
    public String getScoreString() {
-      return "\t [" + gameScore + " points] [" + numZilches + " zilches]";
+      return "\t[" + gameScore + " points] \t[" + numZilches + " zilches]";
    }
 
    // Return summary string of player
    public String getRecentScoreString() {
-      return "\t [" + mostRecentScore + " last score]";
+      return "\t[" + totalPlays +" turns]" + " \t[" + mostRecentScore + " last score]";
    }
 
    // Update player score, marking zilches as required
    public int updateScore(int newPoints) {
+
+      totalPlays++;
 
       // Don't record scores if not yet in the game
       if (!inGame) {
@@ -109,6 +118,7 @@ public class Player {
       // Increment score by new points
       mostRecentScore = newPoints;
       gameScore += newPoints;
+
       return gameScore;
    }
 

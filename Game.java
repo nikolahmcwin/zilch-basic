@@ -37,10 +37,9 @@ public class Game {
    }
 
    // Start the very first turn of play in the game
-   public void playGame() {
+   public void playGame(Scanner sc) {
 
-      Scanner sc = new Scanner(System.in);
-
+      // Scanner sc = new Scanner(System.in);
       while (winner.isEmpty()) {
 
          // Change player
@@ -62,7 +61,8 @@ public class Game {
 
                if ((!players[activePlayer].isInGame() && dice.getScore() >= MIN_START_SCORE)
                      || (players[activePlayer].isInGame() && dice.getScore() >= MIN_BASE_SCORE)) {
-                  System.out.println("Press (X) to finish or any other key to roll again.");
+
+                  System.out.println("\nPress (X) to finish or any other key to roll again.");
                   if (readActionInput(sc)) {
                      autoEnded = false;
                      break;
@@ -77,25 +77,28 @@ public class Game {
          }
 
          // Finish current turn
+         // TODO fix zilches bug
          players[activePlayer].updateScore(dice.getScore());
 
          if (autoEnded) {
-            System.out.println("\n\t YOU GOT ZILCH! \n");
-
+            printDramaticHeadingOut("YOU GOT ZILCH...");
          } else {
-            System.out.println("\n\t CHANGING PLAYERS... \n");
-            //printActivePlayer();
-         }
+            printDramaticHeadingOut("BANKING POINTS...");
 
+         }
+         printPlayers();
+         printDramaticHeadingIn("CHANGING PLAYERS");
          winner = getWinner();
-         
+
       }
    }
 
    // Standard switch case to read keyboard next action input
    private boolean readActionInput(Scanner sc) {
       String input = sc.nextLine();
-      if (input == "X") {
+      input = input.toUpperCase();
+
+      if (input.equals("X")) {
          return true;
       }
       return false;
@@ -105,6 +108,8 @@ public class Game {
    private boolean readDiceInput(Scanner sc) {
 
       String input = sc.nextLine();
+      input = input.toUpperCase();
+
       // Multiple input characters is dice, handle those here
       if (input.length() >= 1) {
          String[] split = input.trim().split("\\s+");
@@ -134,18 +139,15 @@ public class Game {
 
    // Quick print the dice points only
    private void printDicePoints() {
-      System.out.println("--------------------------------");
-      System.out.println(">>> " + players[activePlayer].getName() + ": " + dice.getScore() + " points.");
+      printBorderHeading("" + dice.getScore() + " POINTS");
       System.out.println(dice.getBankedDice());
    }
 
    // Quick print the dice roll
    public void printDiceRoll() {
-      System.out.println("--------------------------------");
-      System.out.println(">>> " + players[activePlayer].getName() + ": Roll # " + dice.getRollNumber() + ".");
+      printBorderHeading("ROLL # " + dice.getRollNumber());
       System.out.println(dice.getActiveDice());
-      System.out.println(dice.getDiceNames());
-      System.out.println("--------------------------------");
+      System.out.println(dice.getDiceNames() + "\n");
    }
 
    // Quick print the dice throw
@@ -155,15 +157,40 @@ public class Game {
 
    // Print current active player
    public void printActivePlayer() {
-      System.out.println("--------------------------------");
-      System.out.println(players[activePlayer].toString());
+      printBorderAndHeading("YOU'RE UP " + players[activePlayer].getNameString() + ":");
    }
 
    // Print full details all players
    public void printPlayers() {
+      printBorderAndHeading("CURRENT SCORES:\n");
       for (Player player : players) {
-         System.out.println(player.toString());
+         System.out.println("" + player.toString());
       }
+   }
+
+   // Print a single line border followed by the heading
+   public void printBorderAndHeading(String headingToPrint) {
+      System.out.println("\n>>> * ------------------------------------ * <<<");
+      System.out.println("\n\t" + headingToPrint + "");
+   }
+
+   // Print a single line border followed by the heading
+   public void printDramaticHeadingOut(String headingToPrint) {
+      System.out.println("\n   ------------------------------------   ");
+      System.out.println("\n\t. \n\t . \n\t  . \n\t   " + headingToPrint + "...");
+      // System.out.println("\n\t >>> ___ " + headingToPrint + "___ <<<");
+   }
+
+   // Print a single line border followed by the heading
+   public void printDramaticHeadingIn(String headingToPrint) {
+      System.out.println("\n   ------------------------------------   ");
+      System.out.println("\n\t   . \n\t  . \n\t . \n\t" + headingToPrint + "...");
+      // System.out.println("\n\t >>> ___ " + headingToPrint + "___ <<<");
+   }
+
+   // Print a single line border followed by the heading
+   public void printBorderHeading(String headingToPrint) {
+      System.out.println("\n   ------------- " + headingToPrint + " -------------   ");
    }
 
    // Quick print for entire game status

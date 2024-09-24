@@ -14,6 +14,7 @@ public class Dice {
    private int trioNumber;
    private int numTrios;
    private int numPairs;
+   private int numSingles;
 
    private Die[] dice;
    private String[] diceNames;
@@ -31,6 +32,7 @@ public class Dice {
       numRolls = 0;
       selectedDice = 0;
       trioNumber = 0;
+      numSingles = 0;
       numPairs = 0;
       numTrios = 0;
 
@@ -50,9 +52,9 @@ public class Dice {
    // Main dice method to loop a player through all throws until no longer can
    public Boolean canContinue() {
       if (autoZilch()) {
+         updateScore();
          return false;
       } else {
-         // Something score here?
          return true;
       }
    }
@@ -63,17 +65,6 @@ public class Dice {
          refillThrow();
       }
       rollActiveDice();
-   }
-
-   // WHen all dice are banked, but can continue, reset them into active
-   private void refillThrow() {
-      for (Die die : dice) {
-         if (die.isBanked() || die.isSelected()) {
-            die.putIntoActiveThrow();
-         }
-      }
-      trioNumber = 0;
-      bankedDice = 0;
    }
 
    // Roll the active dice
@@ -89,19 +80,18 @@ public class Dice {
    // Scan dice throw for auto zilch
    private boolean autoZilch() {
       String diceString = getActiveDice();
-      if (countOccurences(diceString, 1) >= 1 || countOccurences(diceString, 5) >= 1) {
+      countEachOccurance(diceString);
+      if (numTrios != 0 || numPairs == 3 || numberExistsInString(diceString, 1)
+            || numberExistsInString(diceString, 5)) {
          return false;
-      } else if (countOccurences(diceString, 2) >= 3 || countOccurences(diceString, 3) >= 3 ||
-            countOccurences(diceString, 4) >= 3 || countOccurences(diceString, 6) >= 3) {
-         return false;
-      } else {
-         // TODO check for three pairs.
       }
+      tmpScore = 0;
+      updateScore();
       return true;
    }
 
    // Move dice to the points, out of throw, returning true or false if valid to do
-   public boolean bankDiceIfValid(String[] diceToKeep) {   
+   public boolean bankDiceIfValid(String[] diceToKeep) {
       if (!readDiceInput(diceToKeep)) {
          return false;
       }
@@ -122,7 +112,7 @@ public class Dice {
             bankedDice++;
          }
       }
-      score += tmpScore;
+      updateScore();
       nextThrow();
    }
 
@@ -135,16 +125,6 @@ public class Dice {
       }
       nextThrow();
    }
-
-      // Restore all dice to the full throw
-      private void putIntoActiveThrow() {
-         for (Die die : dice) {
-            if (die.isSelected()) {
-               die.putIntoActiveThrow();
-            }
-         }
-         nextThrow();
-      }
 
    // Take the letter name of a dice, get the array index
    private boolean readDiceInput(String[] diceToKeep) {
@@ -163,86 +143,100 @@ public class Dice {
    private boolean checkThrowScore() {
 
       String diceString = getSelectedDice();
+      int diceRemaining = selectedDice;
+      int triosRemaining = numTrios;
 
-      if (selectedDice == 1) {
-         tmpScore = checkSingleDie(diceString);
-         return tmpScore != 0;
-      }
-
-      // TODO more than single dice score;
-      int ones, twos, threes, fours, fives, sixes;
-
-      ones = countOccurences(diceString, 1);
-      twos = countOccurences(diceString, 2);
-      threes = countOccurences(diceString, 3);
-      fours = countOccurences(diceString, 4);
-      fives = countOccurences(diceString, 5);
-      sixes = countOccurences(diceString, 6);
-
-      if (selectedDice == 6) {
-         if (ones == 1 && twos == 1 && threes == 1 && fours == 1 && fives == 1 && sixes == 1) {
-            tmpScore = 1500;
-         } else if (numPairs == 3) { 
-            tmpScore = 1000;
+      if (diceRemaining == 6) {
+         if (numSingles == 6) {
+            tmpScore += 1500;
+            diceRemaining -= 6;
+         } else if (numPairs == 3) {
+            tmpScore += 1000;
+            diceRemaining -= 6;
          }
       }
 
-      if (selectedDice == 3 && numTrios > 0) {
-         if (trioNumber == 1) {
-            tmpScore = trioNumber * 1000;
-         } else { 
-            tmpScore = trioNumber * 100;
-         }
+      while (diceRemaining >= 3 && triosRemaining > 0) {
+         diceString = checkForTrioMatch(diceString);
+         triosRemaining = triosRemaining - 1;
+         diceRemaining = diceRemaining - 3;
       }
 
-      //TODO four dice , five dice, two, dice etc
+      while (diceRemaining > 0) {
+         diceString = checkForSingleMatch(diceString);
+         diceRemaining--;
+      }
+
       return tmpScore != 0;
    }
 
-   // Points for single dice.
-   private int checkSingleDie(String diceString) {
-      int number = numberFromString(diceString);
-      if (number == 1) {
-         return 100;
-      } else if (number == trioNumber) {
-         return 100;
-      } else if (number == 5) {
-         return 50;
+   // Remove sets of matching threes from the dice
+   private String checkForTrioMatch(String diceString) {
+      if (trioNumber <= 0) {
+         return diceString;
       }
-      return 0;
+
+      if (trioNumber == 1) {
+         tmpScore += trioNumber * 1000;
+      } else {
+         tmpScore += trioNumber * 100;
+      }
+
+      for (int i = 0; i < 3; i++) {
+         diceString = removeDiceName(diceString, trioNumber);
+      }
+      return diceString;
+   }
+
+   // Points for single dice.
+   private String checkForSingleMatch(String diceString) {
+
+      if (trioNumber > 0 && numberExistsInString(diceString, trioNumber)) {
+         diceString = removeDiceName(diceString, trioNumber);
+         tmpScore += 100;
+      } else if (numberExistsInString(diceString, 1)) {
+         diceString = removeDiceName(diceString, 1);
+         tmpScore += 100;
+      } else if (numberExistsInString(diceString, 5)) {
+         diceString = removeDiceName(diceString, 5);
+         tmpScore += 50;
+      }
+
+      return diceString;
+   }
+
+   // Basic manipulation to remove a dice name from the string
+   private String removeDiceName(String diceNameString, int diceNumber) {
+      return diceNameString.replaceFirst(Integer.toString(diceNumber), "");
+   }
+
+   // Count if specific number exists within string
+   private boolean numberExistsInString(String string, int numToCount) {
+      return string.indexOf(Integer.toString(numToCount)) >= 0;
+   }
+
+   // Fill out global dice number counts
+   private void countEachOccurance(String diceString) {
+      int[] numbers = new int[] { 1, 2, 3, 4, 5, 6 };
+      for (int num : numbers) {
+         countOccurences(diceString, num);
+      }
+
    }
 
    // Count the number of times the integer appears in the string
-   private int countOccurences(String string, int numToCount) {
+   private void countOccurences(String string, int numToCount) {
       String match = Integer.toString(numToCount);
       int count = string.length() - string.replace(match, "").length();
 
       if (count >= 3) {
          numTrios++;
          trioNumber = numToCount;
-      }
-      if (count == 2) {
+      } else if (count == 2) {
          numPairs++;
+      } else if (count == 1) {
+         numSingles++;
       }
-      return count;
-   }
-
-   // Return dice number based on it existing in String or not
-   private int numberFromString(String string) {
-      if (string.indexOf("1") >= 0) {
-         return 1;
-      } else if (string.indexOf("2") >= 0) {
-         return 2;
-      } else if (string.indexOf("3") >= 0) {
-         return 3;
-      } else if (string.indexOf("4") >= 0) {
-         return 4;
-      } else if (string.indexOf("5") >= 0) {
-         return 5;
-      } else if (string.indexOf("6") >= 0) {
-         return 6;
-      }
-      return 0;
    }
 
    // Take the score and lock it in
@@ -271,13 +265,25 @@ public class Dice {
    }
 
    // Clear single throw stored parameters
-   private void nextThrow(){
+   private void nextThrow() {
       tmpScore = 0;
+      numSingles = 0;
       numPairs = 0;
       numTrios = 0;
       selectedDice = 0;
    }
-   
+
+   // WHen all dice are banked, but can continue, reset them into active
+   private void refillThrow() {
+      for (Die die : dice) {
+         if (die.isBanked() || die.isSelected()) {
+            die.putIntoActiveThrow();
+         }
+      }
+      trioNumber = 0;
+      bankedDice = 0;
+   }
+
    // Take the letter name of a dice, get the array index
    private int getDiceIndex(String dieName) {
       switch (dieName) {

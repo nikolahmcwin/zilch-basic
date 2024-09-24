@@ -9,21 +9,20 @@ public class Main {
       
       System.out.println("\nSTARTING NEW GAME OF ZILCH...\n");
 
-      boolean skipInput = true;
+      boolean skipInput = false;
       Game myFirstGame;
-       
+      
+      Scanner inputScanner = new Scanner(System.in);
       if (skipInput) {
          myFirstGame = new Game();
       } else {
-         Scanner inputScanner = new Scanner(System.in);
          int numPlayers = getNumPlayers(inputScanner);
          String[] playerNames = getPlayerNames(inputScanner, numPlayers);
-         inputScanner.close();
          myFirstGame = new Game(numPlayers, playerNames);
       }
 
-      myFirstGame.playGame();
-      myFirstGame.printGameStatus();
+      myFirstGame.playGame(inputScanner);
+      //myFirstGame.printGameStatus();
    }
 
    // Use console input to get number of playeres
