@@ -17,20 +17,18 @@ public class Player {
    private boolean inGame;
    private int score;
    private int numZilches;
-   private boolean isWinner;
 
    // Default constructor, auto generated name
-   public Player() {   
+   public Player() {
       this("Player_", totalPlayers++);
    }
 
    // Standard constructor, name passed in
-   public Player(String playerName, int playerNumber) {   
+   public Player(String playerName, int playerNumber) {
       name = playerName;
       playerID = playerNumber;
       score = 0;
       numZilches = 0;
-      isWinner = false;
    }
 
    // Return player name
@@ -44,29 +42,39 @@ public class Player {
    }
 
    // Return player ID
-   public int getID(){
+   public int getID() {
       return playerID;
    }
 
-   // Return count of Zilches 
+   // Return count of Zilches
    public int getZilchCount() {
       return numZilches;
+   }
+
+   // Return if the player is in the game score yet
+   public boolean isInGame() {
+      return inGame;
+   }
+   
+   // Return if score is enough to win
+   public boolean isWinner() {
+      return score >= WINNING_GAME_SCORE;
    }
 
    // Return summary string of player
    public String toString() {
       return "PLAYER: [" + name +
-               "] SCORE: [" + Integer.toString(score) + 
-               "] #ZILCH: [" + Integer.toString(numZilches) +
-               "] IN: [" + Boolean.toString(inGame) + "]";
+            "] SCORE: [" + Integer.toString(score) +
+            "] #ZILCH: [" + Integer.toString(numZilches) +
+            "] IN: [" + Boolean.toString(inGame) + "]";
    }
 
-      // Quick print the active player
-      public void printPlayer(int i) {
-         System.out.println("PLAYER: \t" + name);
-         System.out.println("SCORE:  \t" + score);
-         System.out.println("#ZILCH: \t" + numZilches);
-      }
+   // Quick print the active player
+   public void printPlayer(int i) {
+      System.out.println("PLAYER: \t" + name);
+      System.out.println("SCORE:  \t" + score);
+      System.out.println("#ZILCH: \t" + numZilches);
+   }
 
    // Update player score, marking zilches as required
    public int updateScore(int newPoints) {
@@ -82,14 +90,11 @@ public class Player {
 
       // Handle zero points separately
       if (inGame && newPoints == 0) {
-         increaseZilchCount();  
-      } 
+         increaseZilchCount();
+      }
 
       // Increment score by new points
-      score += newPoints;     
-      if(score >= WINNING_GAME_SCORE) {
-         isWinner = true;
-      }
+      score += newPoints;
       return score;
    }
 
@@ -97,7 +102,7 @@ public class Player {
    private void increaseZilchCount() {
       numZilches++;
       if (numZilches >= MAX_NUM_ZILCHES) {
-         score -= SCORE_PENALTY; 
+         score -= SCORE_PENALTY;
          numZilches = 0;
       }
    }

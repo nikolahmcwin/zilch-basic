@@ -7,9 +7,9 @@ public class Main {
 
    public static void main(String[] args) {
       
-      System.out.println("\n **** STARTING NEW GAME OF ZILCH ****");
+      System.out.println("\nSTARTING NEW GAME OF ZILCH...\n");
 
-      boolean skipInput = false;
+      boolean skipInput = true;
       Game myFirstGame;
        
       if (skipInput) {
@@ -22,7 +22,7 @@ public class Main {
          myFirstGame = new Game(numPlayers, playerNames);
       }
 
-      myFirstGame.startGame();
+      myFirstGame.playGame();
       myFirstGame.printGameStatus();
    }
 
@@ -30,9 +30,9 @@ public class Main {
    private static int getNumPlayers(Scanner input) {
       int inNum = 0;
       System.out.println("Enter number of players:");
-      while (inNum < 1 || inNum > 5) {
+      while (inNum < 2 || inNum > 5) {
          if (inNum != 0) {
-            System.out.println("Enter a number between 1 and 5.");
+            System.out.println("Enter a number between 2 and 5.");
          }
          try {
             inNum = Integer.parseInt(input.nextLine());
