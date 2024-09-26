@@ -1,4 +1,3 @@
-import java.lang.StringBuilder;
 import java.util.Scanner;
 
 /*
@@ -8,7 +7,6 @@ public class Game {
 
    private final int MIN_BASE_SCORE = 350;
    private final int MIN_START_SCORE = 1000;
-   private final int WINNING_GAME_SCORE = 10000;
 
    private int numPlayers;
    private int activePlayer;

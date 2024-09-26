@@ -1,5 +1,3 @@
-import java.util.Random;
-
 /*
  * Basic class to hold a player character
  */
