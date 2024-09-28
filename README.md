@@ -3,7 +3,7 @@ Simple Java project to play 'Zilch' dice game in the terminal.
 -----
 Overview
 -----
-2+ players.
+2 players minimum.
 6 six-sided dice.
 Each player takes turns throwing the dice, collecting points, and banking those points to the scoreboard.
 Different value dice have different points.
