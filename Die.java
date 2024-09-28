@@ -44,19 +44,22 @@ public class Die {
    }
 
    // Move from active dice out to points bay
-   public void selectDice() {
+   public void selectDie() {
       selected = true;
    }
 
    // Move from active dice out to points bay
-   public void bankDice() {
+   public void bankDie() {
       banked = true;
+   }
+
+   // Move from points bay back into active
+   public void unselectDie() {
       selected = false;
    }
 
    // Move from points bay back into active
-   public void putIntoActiveThrow() {
-      selected = false;
+   public void unbankDie() {
       banked = false;
    }
 
@@ -71,6 +74,11 @@ public class Die {
    // Return the current number on the die
    public int getNumber() {
       return currentNumber;
+   }
+
+   // Return the die name
+   public String getName() {
+      return name;
    }
 
    // Return summary string of the die

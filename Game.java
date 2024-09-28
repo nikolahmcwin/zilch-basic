@@ -52,7 +52,7 @@ public class Game {
          boolean autoEnded = true;
          while (dice.canContinue()) {
 
-            System.out.println("Enter the letters for the dice to keep.");
+            System.out.println("Enter the letters for the dice to keep or press (X) for all.");
             if (readDiceInput(sc)) {
 
                printDicePoints();
@@ -70,25 +70,32 @@ public class Game {
                printDiceRoll();
 
             } else {
-               System.out.println("Not a valid input. Please try again.");
+               System.out.println("\nNot valid. Please try again.");
             }
          }
 
          // Finish current turn
-         // TODO fix zilches bug
          players[activePlayer].updateScore(dice.getScore());
 
+         //
          if (autoEnded) {
             printDramaticHeadingOut("YOU GOT ZILCH...");
          } else {
             printDramaticHeadingOut("BANKING POINTS...");
-
          }
-         printPlayers();
-         printDramaticHeadingIn("CHANGING PLAYERS");
+
+         printPlayerScores();
          winner = getWinner();
 
+         if (winner.isEmpty()) {
+            printDramaticHeadingIn("CHANGING PLAYERS");
+         }
       }
+
+      printDramaticHeadingIn("CONGRATULATIONS!");
+      printBorderAndHeading(players[activePlayer].getName() + " IS THE WINNER!!!");
+      printBorderAndHeading("");
+
    }
 
    // Standard switch case to read keyboard next action input
@@ -106,14 +113,24 @@ public class Game {
    private boolean readDiceInput(Scanner sc) {
 
       String input = sc.nextLine();
-      input = input.toUpperCase();
+      input = input.toUpperCase().trim();
 
-      // Multiple input characters is dice, handle those here
-      if (input.length() >= 1) {
-         String[] split = input.trim().split("\\s+");
-         if (dice.bankDiceIfValid(split)) {
-            return true;
-         }
+      // Check if (X) was entered to shortcut to all dice
+      if (input.equals("X")) {
+         input = dice.getDiceNames(false, true);
+      }
+
+      // Count how many dice were entered
+      input = input.replaceAll("\\s+", "");
+      int numDiceEntered = input.length();
+      String[] diceChars = new String[numDiceEntered];
+      for (int i = 0; i < numDiceEntered; i++) {
+         diceChars[i] = input.substring(i, i + 1);
+      }
+
+      // Make sure the input dice can actually be kept
+      if (dice.bankDiceIfValid(diceChars)) {
+         return true;
       }
       return false;
    }
@@ -138,14 +155,14 @@ public class Game {
    // Quick print the dice points only
    private void printDicePoints() {
       printBorderHeading("" + dice.getScore() + " POINTS");
-      System.out.println(dice.getBankedDice());
+      System.out.println(dice.getBankedDice(true));
    }
 
    // Quick print the dice roll
    public void printDiceRoll() {
       printBorderHeading("ROLL # " + dice.getRollNumber());
-      System.out.println(dice.getActiveDice());
-      System.out.println(dice.getDiceNames() + "\n");
+      System.out.println(dice.getActiveDice(true));
+      System.out.println(dice.getDiceNames(true, false) + "\n");
    }
 
    // Quick print the dice throw
@@ -159,7 +176,7 @@ public class Game {
    }
 
    // Print full details all players
-   public void printPlayers() {
+   public void printPlayerScores() {
       printBorderAndHeading("CURRENT SCORES:\n");
       for (Player player : players) {
          System.out.println("" + player.toString());
@@ -193,7 +210,7 @@ public class Game {
 
    // Quick print for entire game status
    public void printGameStatus() {
-      printPlayers();
+      printPlayerScores();
       printDice();
    }
 

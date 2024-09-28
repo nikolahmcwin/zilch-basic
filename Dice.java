@@ -12,26 +12,25 @@ public class Dice {
    private int numRolls;
 
    private int trioNumber;
+   private int secondTrioNumber;
    private int numTrios;
    private int numPairs;
    private int numSingles;
 
    private Die[] dice;
    private String[] diceNames;
-   private String allDiceNames;
 
    // Base constructor
    public Dice() {
 
       diceNames = new String[] { "A", "B", "C", "D", "E", "F" };
 
-      allDiceNames = getDiceNames();
-
       score = 0;
       tmpScore = 0;
       numRolls = 0;
       selectedDice = 0;
       trioNumber = 0;
+      secondTrioNumber = 0;
       numSingles = 0;
       numPairs = 0;
       numTrios = 0;
@@ -52,6 +51,8 @@ public class Dice {
    // Main dice method to loop a player through all throws until no longer can
    public Boolean canContinue() {
       if (autoZilch()) {
+         score = 0;
+         tmpScore = 0;
          updateScore();
          return false;
       } else {
@@ -79,36 +80,36 @@ public class Dice {
 
    // Scan dice throw for auto zilch
    private boolean autoZilch() {
-      String diceString = getActiveDice();
+      String diceString = getActiveDice(false);
       countEachOccurance(diceString);
+      Boolean zilch = true;
       if (numTrios != 0 || numPairs == 3 || numberExistsInString(diceString, 1)
-            || numberExistsInString(diceString, 5)) {
-         return false;
+            || numberExistsInString(diceString, 5)
+            || (trioNumber > 0 && numberExistsInString(diceString, trioNumber))) {
+         zilch = false;
       }
-      tmpScore = 0;
-      updateScore();
-      return true;
+      nextThrow();
+      return zilch;
    }
 
    // Move dice to the points, out of throw, returning true or false if valid to do
    public boolean bankDiceIfValid(String[] diceToKeep) {
-      if (!readDiceInput(diceToKeep)) {
-         return false;
+      if (readDiceInput(diceToKeep)) {
+         if (allSelectedDiceHaveValidScorePoints()) {
+            bankSelectedDice();
+            return true;
+         }
       }
-      if (checkThrowScore()) {
-         bankSelectedDice();
-         return true;
-      } else {
-         unselectDice();
-         return false;
-      }
+      unselectDice();
+      return false;
    }
 
    // Store the points from these dice
    private void bankSelectedDice() {
       for (Die die : dice) {
          if (die.isSelected()) {
-            die.bankDice();
+            die.unselectDie();
+            die.bankDie();
             bankedDice++;
          }
       }
@@ -120,7 +121,7 @@ public class Dice {
    private void unselectDice() {
       for (Die die : dice) {
          if (die.isSelected()) {
-            die.putIntoActiveThrow();
+            die.unselectDie();
          }
       }
       nextThrow();
@@ -133,19 +134,26 @@ public class Dice {
          if (index < 0) {
             return false;
          }
-         dice[index].selectDice();
-         selectedDice++;
+         if (dice[index].isActive()) {
+            dice[index].selectDie();
+            selectedDice++;
+         } else {
+            // Attempting to select a non-active die. Cheating!
+            return false;
+         }
       }
       return true;
    }
 
    // Confirm the kept dice is allowed
-   private boolean checkThrowScore() {
+   private boolean allSelectedDiceHaveValidScorePoints() {
 
-      String diceString = getSelectedDice();
       int diceRemaining = selectedDice;
-      int triosRemaining = numTrios;
+      String diceString = getSelectedDice(false);
 
+      countEachOccurance(diceString);
+
+      // Check for matches on all six dice - straight or three pair
       if (diceRemaining == 6) {
          if (numSingles == 6) {
             tmpScore += 1500;
@@ -156,40 +164,49 @@ public class Dice {
          }
       }
 
-      while (diceRemaining >= 3 && triosRemaining > 0) {
-         diceString = checkForTrioMatch(diceString);
-         triosRemaining = triosRemaining - 1;
-         diceRemaining = diceRemaining - 3;
+      // Check for matches of triples
+      if (diceRemaining >= 3) {
+         if (trioNumber != 0) {
+            diceString = removeAnyTrioMatch(diceString, trioNumber);
+            diceRemaining = diceRemaining - 3;
+         }
+         if (secondTrioNumber != 0) {
+            diceString = removeAnyTrioMatch(diceString, secondTrioNumber);
+            diceRemaining = diceRemaining - 3;
+         }
       }
 
       while (diceRemaining > 0) {
-         diceString = checkForSingleMatch(diceString);
-         diceRemaining--;
+         String finalDice = removeAnySingleMatch(diceString);
+         if (finalDice.equals(diceString)) {
+            // No single dice removed -> it isn't valid to keep!
+            tmpScore = 0;
+            return false;
+         } else {
+            // Positive match -> keep going through dice
+            diceString = finalDice;
+            diceRemaining--;
+         }
       }
 
       return tmpScore != 0;
    }
 
    // Remove sets of matching threes from the dice
-   private String checkForTrioMatch(String diceString) {
-      if (trioNumber <= 0) {
-         return diceString;
+   private String removeAnyTrioMatch(String diceString, int numberToCheck) {
+      if (numberToCheck == 1) {
+         tmpScore += 1000;
+      } else if (trioNumber > 1) {
+         tmpScore += numberToCheck * 100;
       }
-
-      if (trioNumber == 1) {
-         tmpScore += trioNumber * 1000;
-      } else {
-         tmpScore += trioNumber * 100;
-      }
-
       for (int i = 0; i < 3; i++) {
-         diceString = removeDiceName(diceString, trioNumber);
+         diceString = removeDiceName(diceString, numberToCheck);
       }
       return diceString;
    }
 
    // Points for single dice.
-   private String checkForSingleMatch(String diceString) {
+   private String removeAnySingleMatch(String diceString) {
 
       if (trioNumber > 0 && numberExistsInString(diceString, trioNumber)) {
          diceString = removeDiceName(diceString, trioNumber);
@@ -231,7 +248,11 @@ public class Dice {
 
       if (count >= 3) {
          numTrios++;
-         trioNumber = numToCount;
+         if (numTrios > 1) {
+            secondTrioNumber = numToCount;
+         } else {
+            trioNumber = numToCount;
+         }
       } else if (count == 2) {
          numPairs++;
       } else if (count == 1) {
@@ -259,6 +280,7 @@ public class Dice {
    private void newThrow() {
       score = 0;
       trioNumber = 0;
+      secondTrioNumber = 0;
       bankedDice = 0;
       numRolls = 0;
       nextThrow();
@@ -276,12 +298,17 @@ public class Dice {
    // WHen all dice are banked, but can continue, reset them into active
    private void refillThrow() {
       for (Die die : dice) {
-         if (die.isBanked() || die.isSelected()) {
-            die.putIntoActiveThrow();
+         if (die.isBanked()) {
+            die.unbankDie();
+         }
+         if (die.isSelected()) {
+            die.unselectDie();
          }
       }
       trioNumber = 0;
+      secondTrioNumber = 0;
       bankedDice = 0;
+      selectedDice = 0;
    }
 
    // Take the letter name of a dice, get the array index
@@ -304,50 +331,116 @@ public class Dice {
       }
    }
 
-   // Set up the required number of dice.
-   public String getDiceNames() {
-      if (allDiceNames == null) {
+      // Set up the required number of dice.
+      public String getDiceNames(boolean getFormatted, Boolean getActiveOnly) {
+
          StringBuilder sb = new StringBuilder();
-         sb.append("\t");
-         for (String name : diceNames) {
-            sb.append("[" + name + "] ");
+   
+         if (getFormatted) {
+            sb.append("\t");
          }
-         allDiceNames = sb.toString();
+   
+         for (Die die : dice) {
+
+            if (getActiveOnly && !die.isActive()) {
+               continue;
+            } 
+
+            if (getFormatted) {
+               sb.append("[" + die.getName() + "]");
+            } else {
+               sb.append(die.getName());
+            }
+            sb.append(" ");
+         }
+   
+         return sb.toString();
       }
-      return allDiceNames;
-   }
-
-   // Get a string of the current active dice
-   public String getActiveDice() {
-      return getDice(true, false, false);
-   }
-
-   // Get a string of the current banked dice
-   public String getBankedDice() {
-      return getDice(false, true, false);
-   }
-
-   // Get a string of the current selected dice
-   public String getSelectedDice() {
-      return getDice(false, false, true);
-   }
-
-   // Return a string of the dice
-   private String getDice(boolean getActive, boolean getBanked, boolean getSelected) {
+   // Set up the required number of dice.
+   public String getOldDiceNames(boolean getFormatted) {
 
       StringBuilder sb = new StringBuilder();
-      sb.append("\t");
-      for (Die die : dice) {
-         if ((getActive && die.isActive()) || (getBanked && die.isBanked()) || (getSelected && die.isSelected())) {
-            sb.append("[" + die.getNumber() + "] ");
-         } else {
-            sb.append("[ ] ");
-         }
+
+      if (getFormatted) {
+         sb.append("\t");
       }
+
+      for (String name : diceNames) {
+         if (getFormatted) {
+            sb.append("[" + name + "]");
+         } else {
+            sb.append(name);
+         }
+         sb.append(" ");
+      }
+
       return sb.toString();
    }
 
+   // Get a string of the current active dice
+   public String getActiveDice(boolean getFormatted) {
+      return getDice(true, false, false, getFormatted);
+   }
+
+   // Get a string of the current banked dice
+   public String getBankedDice(boolean getFormatted) {
+      return getDice(false, true, false, getFormatted);
+   }
+
+   // Get a string of the current selected dice
+   public String getSelectedDice(boolean getFormatted) {
+      return getDice(false, false, true, getFormatted);
+   }
+
+   // Return a string of the dice
+   private String getDice(boolean getActive, boolean getBanked, boolean getSelected, boolean getFormatted) {
+
+      StringBuilder sb = new StringBuilder();
+
+      if (getFormatted) {
+         sb.append("\t");
+      }
+
+      for (Die die : dice) {
+         if (getActive) {
+            if (die.isActive()) {
+               sb.append(formatNumber(die.getNumber(), getFormatted));
+            } else {
+               sb.append(formatNumber(0, getFormatted));
+            }
+         } else if (getBanked) {
+            if (die.isBanked()) {
+               sb.append(formatNumber(die.getNumber(), getFormatted));
+            } else {
+               sb.append(formatNumber(0, getFormatted));
+            }
+         } else if (getSelected) {
+            if (die.isSelected()) {
+               sb.append(formatNumber(die.getNumber(), getFormatted));
+            } else {
+               sb.append(formatNumber(0, getFormatted));
+            }
+         }
+         sb.append(" ");
+      }
+
+      return sb.toString();
+   }
+
+   // return dice number in brackets or not
+   private String formatNumber(int number, boolean getFormatted) {
+      if (getFormatted && number == 0) {
+         return "[ ]";
+      } else if (getFormatted) {
+         return "[" + number + "]";
+      } else if (number == 0) {
+         return "";
+      } else {
+         return Integer.toString(number);
+      }
+   }
+
    public String toString() {
-      return "\n" + getBankedDice() + "\n" + getActiveDice() + "\n" + getDiceNames();
+      return "\n" + getBankedDice(true) + "\n" + getActiveDice(true) + "\n" + getDiceNames(true, false);
    }
 }

@@ -15,7 +15,7 @@ public class Player {
    private boolean inGame;
    private int gameScore;
    private int mostRecentScore;
-   private int numZilches;
+   private int numConsecutiveZilches;
    private int totalPlays;
 
    // Default constructor, auto generated name
@@ -29,7 +29,7 @@ public class Player {
       playerID = playerNumber;
       gameScore = 0;
       mostRecentScore = 0;
-      numZilches = 0;
+      numConsecutiveZilches = 0;
       totalPlays = 0;
    }
 
@@ -55,14 +55,14 @@ public class Player {
 
    // Return count of Zilches
    public int getZilchCount() {
-      return numZilches;
+      return numConsecutiveZilches;
    }
 
-      // Return count of Zilches
-      public int getPlayCount() {
-         return totalPlays;
-      }
-   
+   // Return count of Zilches
+   public int getPlayCount() {
+      return totalPlays;
+   }
+
    // Return if the player is in the game score yet
    public boolean isInGame() {
       return inGame;
@@ -85,12 +85,12 @@ public class Player {
 
    // Return summary string of player
    public String getScoreString() {
-      return "\t[" + gameScore + " points] \t[" + numZilches + " zilches]";
+      return "\t[" + gameScore + " points] \t[" + numConsecutiveZilches + " zilches]";
    }
 
    // Return summary string of player
    public String getRecentScoreString() {
-      return "\t[" + totalPlays +" turns]" + " \t[" + mostRecentScore + " last score]";
+      return "\t[" + totalPlays + " turns]" + " \t[" + mostRecentScore + " last score]";
    }
 
    // Update player score, marking zilches as required
@@ -108,25 +108,23 @@ public class Player {
          }
       }
 
-      // Handle zero points separately
-      if (inGame && newPoints == 0) {
-         increaseZilchCount();
+      if (newPoints == 0) {
+         // Handle logic for getting zero points (zilch score)
+         numConsecutiveZilches++;
+         if (numConsecutiveZilches >= MAX_NUM_ZILCHES) {
+            gameScore -= SCORE_PENALTY;
+            numConsecutiveZilches = 0;
+         }
+
+      } else {
+
+         // Increment score by new points, removing zilch counter
+         numConsecutiveZilches = 0;
+         gameScore += newPoints;
       }
 
-      // Increment score by new points
       mostRecentScore = newPoints;
-      gameScore += newPoints;
-
       return gameScore;
-   }
-
-   // Handle logic for getting zero points (zilch score)
-   private void increaseZilchCount() {
-      numZilches++;
-      if (numZilches >= MAX_NUM_ZILCHES) {
-         gameScore -= SCORE_PENALTY;
-         numZilches = 0;
-      }
    }
 
 }
